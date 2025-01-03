@@ -81,7 +81,7 @@ func videoStreamRoutine(eventChannel chan string, wg *sync.WaitGroup) {
 		"ffmpeg", "-re", "-stream_loop", "-1", "-i",
 		"rtsp://192.168.1.25:554/user=admin&password=&channel=1&stream=0.sdp",
 		"-c", "copy", "-f", "rtsp", "-rtsp_transport", "tcp",
-		"rtsp://gabriel:7jp73b123@195.200.5.15:8554/garage",
+		"rtsps://gabriel:7jp73b123@195.200.5.15:8322/garage",
 	)
 	enabled := false
 	cmd.Stderr = os.Stderr
@@ -98,6 +98,17 @@ func videoStreamRoutine(eventChannel chan string, wg *sync.WaitGroup) {
 
 			if err := cmd.Start(); err != nil {
 				fmt.Printf("%s ERROR failed to execute ffmpeg stream: %s\n", time.Now().Format(time.RFC3339), err.Error())
+
+				cmd = exec.Command(
+					"ffmpeg", "-re", "-stream_loop", "-1", "-i",
+					"rtsp://192.168.1.25:554/user=admin&password=&channel=1&stream=0.sdp",
+					"-c", "copy", "-f", "rtsp", "-rtsp_transport", "tcp",
+					"rtsps://gabriel:7jp73b123@195.200.5.15:8322/garage",
+				)
+
+				cmd.Stderr = os.Stderr
+				cmd.Stdout = os.Stdout
+				enabled = false
 			} else {
 				wg.Add(1)
 				enabled = true
