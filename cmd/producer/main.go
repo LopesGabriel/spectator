@@ -50,13 +50,10 @@ func main() {
 
 	topic := "spectator-topic"
 	command := os.Args[1]
-	headers := make([]kafka.Header, 1)
-	headers = append(headers, kafka.Header{Key: "content-type", Value: []byte("application/json")})
 
 	p.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
 		Value:          []byte(command),
-		Headers:        headers,
 	}, nil)
 
 	// Wait for all messages to be delivered

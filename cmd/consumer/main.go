@@ -64,7 +64,7 @@ func main() {
 			}
 
 			value := string(ev.Value)
-			fmt.Printf("%s Received new event with value '%s'\n", time.Now().Format(time.RFC3339), value)
+			fmt.Printf("%s Received new event with value '%s' and headers '%v'\n", time.Now().Format(time.RFC3339), value, ev.Headers)
 			eventChan <- value
 		}
 	}
@@ -89,7 +89,6 @@ func videoStreamRoutine(eventChannel chan string, wg *sync.WaitGroup) {
 
 	for {
 		value := <-eventChannel
-		fmt.Printf("handling event %s\n", value)
 
 		switch value {
 		case "start":
@@ -107,7 +106,7 @@ func videoStreamRoutine(eventChannel chan string, wg *sync.WaitGroup) {
 				go func() {
 					err := cmd.Wait()
 					if err != nil {
-						fmt.Printf("ffmpeg %s", err)
+						fmt.Printf("%s ffmpeg process: %s\n", time.Now().Format(time.RFC3339), err)
 					}
 				}()
 			}
@@ -125,6 +124,8 @@ func videoStreamRoutine(eventChannel chan string, wg *sync.WaitGroup) {
 
 			wg.Done()
 			enabled = false
+		default:
+			fmt.Printf("%s Received unknown message: %s\n", time.Now().Format(time.RFC3339), value)
 		}
 	}
 }
