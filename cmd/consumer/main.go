@@ -118,6 +118,16 @@ func videoStreamRoutine(eventChannel chan string, wg *sync.WaitGroup) {
 					err := cmd.Wait()
 					if err != nil {
 						fmt.Printf("%s ffmpeg process: %s\n", time.Now().Format(time.RFC3339), err)
+
+						cmd = exec.Command(
+							"ffmpeg", "-re", "-stream_loop", "-1", "-i",
+							"rtsp://192.168.1.25:554/user=admin&password=&channel=1&stream=0.sdp",
+							"-c", "copy", "-f", "rtsp", "-rtsp_transport", "tcp",
+							"rtsps://gabriel:7jp73b123@195.200.5.15:8322/garage",
+						)
+
+						cmd.Stderr = os.Stderr
+						cmd.Stdout = os.Stdout
 					}
 				}()
 			}
@@ -133,8 +143,8 @@ func videoStreamRoutine(eventChannel chan string, wg *sync.WaitGroup) {
 				fmt.Printf("%s Video stream stoped\n", time.Now().Format(time.RFC3339))
 			}
 
-			wg.Done()
 			enabled = false
+			wg.Done()
 		default:
 			fmt.Printf("%s Received unknown message: %s\n", time.Now().Format(time.RFC3339), value)
 		}
