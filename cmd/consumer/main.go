@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	kafkaHost := getEnvOrDefault("KAFKA_HOST", "localhost:9092")
+	kafkaHost := getEnvOrDefault("KAFKA_HOST", "195.200.5.15:9092")
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		// User-specific properties that you must set
 		"bootstrap.servers": kafkaHost,
@@ -79,14 +79,13 @@ func main() {
 func videoStreamRoutine(eventChannel chan string, wg *sync.WaitGroup) {
 	cmd := exec.Command(
 		"ffmpeg", "-re", "-stream_loop", "-1", "-i",
-		"\"rtsp://192.168.1.25:554/user=admin&password=&channel=1&stream=0.sdp\"",
+		"rtsp://192.168.1.25:554/user=admin&password=&channel=1&stream=0.sdp",
 		"-c", "copy", "-f", "rtsp", "-rtsp_transport", "tcp",
-		"\"rtsp://gabriel:7jp73b123@195.200.5.15:8554/garage\"",
+		"rtsp://gabriel:7jp73b123@195.200.5.15:8554/garage",
 	)
 	enabled := false
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
-	fmt.Println(cmd.String())
 
 	for {
 		value := <-eventChannel
@@ -94,6 +93,10 @@ func videoStreamRoutine(eventChannel chan string, wg *sync.WaitGroup) {
 
 		switch value {
 		case "start":
+			if enabled {
+				fmt.Printf("%s streaming is already running\n", time.Now().Format(time.RFC3339))
+			}
+
 			if err := cmd.Start(); err != nil {
 				fmt.Printf("%s ERROR failed to execute ffmpeg stream: %s\n", time.Now().Format(time.RFC3339), err.Error())
 			} else {
@@ -101,10 +104,12 @@ func videoStreamRoutine(eventChannel chan string, wg *sync.WaitGroup) {
 				enabled = true
 				fmt.Printf("%s Video stream started\n", time.Now().Format(time.RFC3339))
 
-				err = cmd.Wait()
-				if err != nil {
-					fmt.Printf("Deu erro aqui %s", err)
-				}
+				go func() {
+					err := cmd.Wait()
+					if err != nil {
+						fmt.Printf("ffmpeg %s", err)
+					}
+				}()
 			}
 		case "stop":
 			if !enabled {
